@@ -33,9 +33,9 @@ jobs:
         run: |
           mkdir -p out
           cp result-example/image.efi out/snpbase-example-minimal.efi
-          cp result-example/manifest.json out/snpbase-example-minimal.manifest.json
+          cp result-example/reference-values.json out/snpbase-example-minimal.reference-values.json
           cp result-example-debug/image.efi out/snpbase-example-minimal-debug.efi
-          cp result-example-debug/manifest.json out/snpbase-example-minimal-debug.manifest.json
+          cp result-example-debug/reference-values.json out/snpbase-example-minimal-debug.reference-values.json
           for p in minimal sandbox disk; do cp "$(nix build .#kernel-$p --no-link --print-out-paths)/bzImage" out/kernel-$p.bzImage; done
           (cd out && sha256sum * > SHA256SUMS && cat SHA256SUMS)
       - uses: actions/upload-artifact@v4
@@ -58,6 +58,6 @@ jobs:
         with:
           files: out/*
           body: |
-            UKIs, manifests and kernels for this tag. `SHA256SUMS` lists every file.
+            UKIs, Reference Values and kernels for this tag. `SHA256SUMS` lists every file.
             The debug image carries no ssh key; build one with `scripts/build-debug.sh`.
-            Manifests carry layer hashes but no launch measurements (Reference Values for the Evidence); pass the provider's firmware as `ovmf` to `mkImage`.
+            The Reference Values carry layer hashes but no launch measurements; pass the provider's firmware as `ovmf` to `mkImage`.

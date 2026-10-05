@@ -29,7 +29,7 @@ Initramfs:
 Measured command line: `panic=-1 rootfstype=ramfs rdinit=/init`, console settings in debug
 images, `ip=dhcp` when the app manifest names `net`, then the app part.
 
-The Reference Values in `manifest.json` include the hash of the binary under `init` (the string
+The Reference Values in `reference-values.json` include the hash of the binary under `init` (the string
 `shell` when the shell init is used), next to the kernel, base-initramfs and app hashes.
 
 ## Required of the binary

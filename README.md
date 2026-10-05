@@ -3,7 +3,7 @@
 Builds measured boot images for AMD SEV-SNP confidential VMs. An image is a Unified Kernel Image
 (UKI) made of a kernel built from a profile, a base initramfs, an application directory supplied
 by the consumer, and a command line. The firmware measures all four at launch. The build also
-emits `manifest.json`, the Reference Values for that image.
+emits `reference-values.json`, the Reference Values for that image.
 
 ## Attestation roles
 
@@ -16,9 +16,9 @@ Terms follow the RATS architecture (RFC 9334).
 | Target Environment | the OVMF firmware and the UKI: kernel, initramfs, app, command line |
 | Evidence | the `ATTESTATION_REPORT` the guest obtains through `/dev/sev-guest`; its `MEASUREMENT` field is the launch measurement |
 | Endorsements | the VCEK or VLEK certificate chain from AMD |
-| Reference Values | `manifest.json`: the launch measurement per vCPU count and CPU type, and the hash of each layer |
-| Reference Value Provider | whoever publishes a `manifest.json` after reviewing it: the consumer, or an auditor |
-| Verifier | software that appraises Evidence against Reference Values and Endorsements, such as [libsnpverify](https://github.com/lsd-cat/libsnpverify) |
+| Reference Values | `reference-values.json`: the launch measurement per vCPU count and CPU type, and the hash of each layer |
+| Reference Value Provider | whoever publishes a `reference-values.json` after reviewing it: the consumer, or an auditor |
+| Verifier | software that appraises Evidence against Reference Values and Endorsements, such as [snpverify](https://github.com/lsd-cat/snpverify) |
 | Relying Party | the client that acts on the Attestation Result |
 
 ## Layers
@@ -32,7 +32,7 @@ Terms follow the RATS architecture (RFC 9334).
 
 The app directory is packed under `/app/` by the build, so an application cannot replace a base
 file. A Reference Value Provider that has reviewed a release of this repository compares the
-kernel and base-initramfs hashes in a consumer's `manifest.json` with that release, then reads
+kernel and base-initramfs hashes in a consumer's `reference-values.json` with that release, then reads
 the app directory and the app part of the command line.
 
 ## Kernel profiles
@@ -104,7 +104,7 @@ packages.image = snpbase.lib.mkImage {
 };
 ```
 
-The output directory contains `image.efi` and `manifest.json`: profile, variant, kernel version,
+The output directory contains `image.efi` and `reference-values.json`: profile, variant, kernel version,
 the hash of each layer, both command-line parts, the UKI hash, and, when `ovmf` is given, its hash
 and the launch measurement for each vCPU count and CPU type. A Verifier compares the measurement
 with the `MEASUREMENT` field of the Evidence. The measurement depends on the firmware the
@@ -118,7 +118,7 @@ whether `/dev/sev-guest` exists, and the kernel version. `example-minimal` is th
 (tested 2026-10-05).
 
 ```sh
-nix build .#example-minimal              # result/image.efi, result/manifest.json
+nix build .#example-minimal              # result/image.efi, result/reference-values.json
 scripts/build-debug.sh ~/.ssh/id.pub     # debug image accepting that key -> result-debug/; arguments: KEY [APP] [PROFILE] [OVMF]
 scripts/qemu-http.sh result              # boots without SEV, prints the app's HTTP lines
 scripts/qemu-boot.sh result-debug        # boots a debug image, waits for the console line
@@ -127,9 +127,9 @@ nix build .#kernel-minimal --rebuild     # rebuilds; fails if the bytes differ
 
 Builds need an x86_64-linux machine; the QEMU scripts need KVM and an OVMF file
 (`/usr/share/OVMF/OVMF_CODE_4M.fd` by default). CI builds the kernels and both images, rebuilds
-four artifacts and compares the bytes, boots both images under QEMU, and uploads UKIs, manifests,
-kernels and `SHA256SUMS`; a `v*` tag attaches them to a release. CI manifests carry layer hashes
-but no launch measurements, because those depend on the provider's firmware. Every kernel fragment line is
+four artifacts and compares the bytes, boots both images under QEMU, and uploads UKIs, Reference Values,
+kernels and `SHA256SUMS`; a `v*` tag attaches them to a release. CI Reference Values carry layer
+hashes but no launch measurements, because those depend on the provider's firmware. Every kernel fragment line is
 checked against the final configuration. The pinned `sev-snp-measure` accepts `EPYC-Milan` and
 `EPYC-Genoa`; `EPYC-Turin` needs a newer release.
 

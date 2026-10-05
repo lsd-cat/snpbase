@@ -1,4 +1,4 @@
-# mkImage: kernel profile, base initramfs, app directory and command line -> UKI and manifest.json,
+# mkImage: kernel profile, base initramfs, app directory and command line -> UKI and reference-values.json,
 # the Reference Values (RFC 9334) a Verifier compares with the Evidence.
 # The app directory is packed under /app/, so it cannot replace a base file. `init`, when given, is
 # a static binary installed as PID 1; the shell init is then not included.
@@ -40,7 +40,7 @@ pkgs.runCommand "snp-${name}-${profile}-${variant}" { nativeBuildInputs = with p
     --output $out/${name}.efi
 
   # Launch measurements, the Reference Values for the MEASUREMENT field of the Evidence, need the
-  # firmware the provider boots; without `ovmf` the manifest has none.
+  # firmware the provider boots; without `ovmf` the Reference Values have none.
   measurements='{}'
   ${lib.optionalString (ovmf != null) ''
     for n in ${toString vcpus}; do for t in ${toString vcpuTypes}; do
@@ -58,5 +58,5 @@ pkgs.runCommand "snp-${name}-${profile}-${variant}" { nativeBuildInputs = with p
     '{ base: { profile: $profile, variant: $variant, kernel_version: $kernelVersion, kernel_sha256: $kernel, initramfs_sha256: $initramfs, cmdline: $baseCmdline },
        init: (if $init == "" then "shell" else $init end),
        app: { sha256: $app, cmdline: $appCmdline },
-       ovmf_sha256: (if $ovmf == "" then null else $ovmf end), uki_sha256: $uki, measurements: $measurements }' > $out/manifest.json
+       ovmf_sha256: (if $ovmf == "" then null else $ovmf end), uki_sha256: $uki, measurements: $measurements }' > $out/reference-values.json
 ''
