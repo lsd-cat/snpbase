@@ -45,9 +45,11 @@ the app directory and the app part of the command line.
 
 The base has no block layer, module loading, USB, input, sound, graphics or console drivers, no
 BPF, io_uring, kexec, `/dev/mem` or perf interface, no KVM paravirtual interfaces (the clocksource
-is the TSC, host-proof when the guest is launched with Secure TSC), and every x86
-speculative-execution mitigation that applies to a guest. Sizes: `minimal` kernel 3.7 MB, base initramfs 0.2 MB,
-`example-minimal` image 4.0 MB.
+is the TSC, host-proof when the guest is launched with Secure TSC), no support for CPU vendors
+other than AMD, no machine-check handler (a host-injected `#MC` panics the guest), no EFI runtime
+services after boot, no usermode helpers, and every x86 speculative-execution mitigation that
+applies to an AMD guest. Sizes: `minimal` kernel 3.6 MB, base initramfs 0.2 MB, `example-minimal`
+image 3.9 MB.
 
 `debug = true` adds console drivers, early printk, symbol names in panic traces,
 `/proc/config.gz`, printk timestamps, the EFI runtime map, the full busybox, a shell on each
