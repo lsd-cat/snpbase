@@ -1,0 +1,9 @@
+#!/bin/busybox sh
+# Example app for the minimal profile: serves three status lines over HTTP on port 8080 and
+# prints them on the consoles that exist.
+bb=/bin/busybox
+if [ -e /dev/sev-guest ]; then sev="sev-guest device present"; else sev="no sev-guest device"; fi
+$bb mkdir -p /run/www
+$bb printf 'hello from /app/init\n%s\nkernel %s\n' "$sev" "$($bb uname -r)" > /run/www/index.html
+for c in /dev/tty0 /dev/ttyS0; do ( $bb cat /run/www/index.html > $c ) 2>/dev/null; done
+exec $bb httpd -f -p 8080 -h /run/www
