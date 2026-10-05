@@ -30,6 +30,7 @@ if [ -x /bin/dropbear ]; then
     $bb mkdir -p /dev/pts && $bb mount -t devpts devpts /dev/pts   # devtmpfs hides the initramfs /dev/pts
     /bin/dropbear -R -E -p 22 2>/dev/null &
     log "dropbear on :22 ($([ -s /root/.ssh/authorized_keys ] && echo key installed || echo no key))"
+    log "secure tsc: $($bb grep -q snp_secure_tsc /proc/cpuinfo && echo yes || echo no); clocksource: $($bb cat /sys/devices/system/clocksource/clocksource0/current_clocksource)"
     for con in ttyS0 tty1; do
         [ -e "/dev/$con" ] && ( while :; do $bb setsid -c $bb sh <"/dev/$con" >"/dev/$con" 2>&1; $bb sleep 1; done ) &
     done

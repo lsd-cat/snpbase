@@ -44,8 +44,9 @@ the app directory and the app part of the command line.
 | `disk` | block layer, virtio-blk, dm-crypt, dm-verity, erofs | a verity-protected root on a disk, or an encrypted local volume |
 
 The base has no block layer, module loading, USB, input, sound, graphics or console drivers, no
-BPF, io_uring, kexec, `/dev/mem` or perf interface, and every x86 speculative-execution
-mitigation that applies to a guest. Sizes: `minimal` kernel 3.7 MB, base initramfs 0.2 MB,
+BPF, io_uring, kexec, `/dev/mem` or perf interface, no KVM paravirtual interfaces (the clocksource
+is the TSC, host-proof when the guest is launched with Secure TSC), and every x86
+speculative-execution mitigation that applies to a guest. Sizes: `minimal` kernel 3.7 MB, base initramfs 0.2 MB,
 `example-minimal` image 4.0 MB.
 
 `debug = true` adds console drivers, early printk, symbol names in panic traces,
@@ -100,20 +101,21 @@ packages.image = snpbase.lib.mkImage {
   ovmf = ./OVMF.fd;                 # the firmware the provider boots; measurements need it
   vcpus = [ 2 4 ];                  # measurement matrix
   vcpuTypes = [ "EPYC-Genoa" ];
+  guestFeatures = "0x1";            # VMSA SEV_FEATURES at launch; 0x201 with Secure TSC
   authorizedKeys = null;            # a public-key file; debug images only
 };
 ```
 
 The output directory contains `image.efi` and `reference-values.json`: profile, variant, kernel version,
-the hash of each layer, both command-line parts, the UKI hash, and, when `ovmf` is given, its hash
-and the launch measurement for each vCPU count and CPU type. A Verifier compares the measurement
+the hash of each layer, both command-line parts, the UKI hash, the guest features value, and, when
+`ovmf` is given, its hash and the launch measurement for each vCPU count and CPU type. A Verifier compares the measurement
 with the `MEASUREMENT` field of the Evidence. The measurement depends on the firmware the
 provider boots, so the provider's OVMF file is the input, not one from this repository.
 
 ## Example and tests
 
-`examples/minimal/app` declares `net` and serves three lines over HTTP on port 8080: a greeting,
-whether `/dev/sev-guest` exists, and the kernel version. `example-minimal` is this app on the
+`examples/minimal/app` declares `net` and serves four lines over HTTP on port 8080: a greeting,
+whether `/dev/sev-guest` exists, the kernel version, and whether Secure TSC is on. `example-minimal` is this app on the
 `minimal` profile; `example-minimal-debug` adds the debug switch. Both boot on SEV-SNP hardware
 (tested 2026-10-05).
 

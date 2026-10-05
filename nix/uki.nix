@@ -5,7 +5,8 @@
 { pkgs, lib, kernel, initramfs }:
 { profile ? "minimal", debug ? false, app, init ? null, cmdline ? "", ovmf ? null, authorizedKeys ? null
 # EPYC-Turin as a vcpuType needs a sev-snp-measure newer than the pinned 0.0.11.
-, vcpus ? [ 1 2 4 8 ], vcpuTypes ? [ "EPYC-Milan" "EPYC-Genoa" ], name ? "image" }:
+# guestFeatures is the VMSA SEV_FEATURES value the provider launches with; 0x1 is plain SNP, 0x201 adds Secure TSC.
+, vcpus ? [ 1 2 4 8 ], vcpuTypes ? [ "EPYC-Milan" "EPYC-Genoa" ], guestFeatures ? "0x1", name ? "image" }:
 let
   k = kernel { inherit profile debug; };
   base = initramfs { inherit debug authorizedKeys init; };
@@ -44,7 +45,7 @@ pkgs.runCommand "snp-${name}-${profile}-${variant}" { nativeBuildInputs = with p
   measurements='{}'
   ${lib.optionalString (ovmf != null) ''
     for n in ${toString vcpus}; do for t in ${toString vcpuTypes}; do
-      m=$(sev-snp-measure --mode snp --vcpus $n --vcpu-type $t --ovmf ${ovmf} --kernel $out/${name}.efi --output-format hex)
+      m=$(sev-snp-measure --mode snp --vcpus $n --vcpu-type $t --guest-features ${guestFeatures} --ovmf ${ovmf} --kernel $out/${name}.efi --output-format hex)
       measurements=$(echo "$measurements" | jq --arg k "$n/$t" --arg v "$m" '. + {($k): $v}')
     done; done
   ''}
@@ -54,9 +55,9 @@ pkgs.runCommand "snp-${name}-${profile}-${variant}" { nativeBuildInputs = with p
     --arg kernel "$(sha256sum ${k}/bzImage | cut -d' ' -f1)" --arg initramfs "$(sha256sum ${base} | cut -d' ' -f1)" \
     --arg app "$(sha256sum ${appCpio} | cut -d' ' -f1)" --arg init "${if init != null then "$(sha256sum ${init} | cut -d' ' -f1)" else ""}" --arg baseCmdline ${lib.escapeShellArg (baseCmdline + netCmdline)} \
     --arg appCmdline ${lib.escapeShellArg appCmdline} --arg ovmf "${if ovmf != null then "$(sha256sum ${ovmf} | cut -d' ' -f1)" else ""}" \
-    --arg uki "$(sha256sum $out/${name}.efi | cut -d' ' -f1)" --argjson measurements "$measurements" \
+    --arg uki "$(sha256sum $out/${name}.efi | cut -d' ' -f1)" --arg guestFeatures "${guestFeatures}" --argjson measurements "$measurements" \
     '{ base: { profile: $profile, variant: $variant, kernel_version: $kernelVersion, kernel_sha256: $kernel, initramfs_sha256: $initramfs, cmdline: $baseCmdline },
        init: (if $init == "" then "shell" else $init end),
        app: { sha256: $app, cmdline: $appCmdline },
-       ovmf_sha256: (if $ovmf == "" then null else $ovmf end), uki_sha256: $uki, measurements: $measurements }' > $out/reference-values.json
+       ovmf_sha256: (if $ovmf == "" then null else $ovmf end), uki_sha256: $uki, guest_features: $guestFeatures, measurements: $measurements }' > $out/reference-values.json
 ''
