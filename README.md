@@ -125,8 +125,8 @@ scripts/qemu-boot.sh result-debug        # boots a debug image, waits for the co
 nix build .#kernel-minimal --rebuild     # rebuilds; fails if the bytes differ
 ```
 
-Builds need an x86_64-linux machine; the QEMU scripts need KVM and an OVMF file
-(`/usr/share/OVMF/OVMF_CODE_4M.fd` by default). CI builds the kernels and both images, rebuilds
+Builds need an x86_64-linux machine. `nix develop` provides QEMU and an OVMF file for the scripts
+(`OVMF_CODE`); they use KVM when present and software emulation otherwise. CI builds the kernels and both images, rebuilds
 four artifacts and compares the bytes, boots both images under QEMU, and uploads UKIs, Reference Values,
 kernels and `SHA256SUMS`; a `v*` tag attaches them to a release. CI Reference Values carry layer
 hashes but no launch measurements, because those depend on the provider's firmware. Every kernel fragment line is

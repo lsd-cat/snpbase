@@ -30,6 +30,9 @@
         default = self.packages.${system}.example-minimal;
       };
 
-      devShells.${system}.default = pkgs.mkShell { packages = with pkgs; [ qemu_kvm sev-snp-measure zstd cpio jq ]; };
+      devShells.${system}.default = pkgs.mkShell {
+        packages = with pkgs; [ qemu_kvm sev-snp-measure zstd cpio jq ];
+        OVMF_CODE = "${pkgs.OVMF.fd}/FV/OVMF_CODE.fd";   # firmware for the QEMU scripts
+      };
     };
 }
